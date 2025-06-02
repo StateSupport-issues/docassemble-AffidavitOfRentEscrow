@@ -109,6 +109,9 @@ code: |
   # You can set user_ask_role directly instead to either 'plaintiff' or 'defendant'
   #user_ask_role
   trial_court_district
+  trial_court_state
+  the_county
+  display_court
   docket_number
   users.gather()
   set_parts(subtitle=str(users))
@@ -270,40 +273,68 @@ code: |
     court_index
     my_court = the_courts.as_court("my_court", court_index)
 ---
+code: |
+  def get_judicial_district(the_county):
+      if the_county in ["McLeod", "Sibley", "Carver", "Scott", "Dakota", "Le Sueur", "Goodhue"]:
+          return "First Judicial District"
+      elif the_county == "Ramsey":
+          return "Second Judicial District"
+      elif the_county in ["Rice", "Waseca", "Steele", "Dodge", "Olmsted", "Wabasha", "Winona", "Freeborn", "Mower", "Fillmore", "Houston"]:
+          return "Third Judicial District"
+      elif the_county == "Hennepin":
+          return "Fourth Judicial District"
+      elif the_county in ["Lincoln", "Lyon", "Redwood", "Brown", "Nicollet", "Pipestone", "Murray", "Cottonwood", "Watonwan", "Blue Earth", "Rock", "Nobles", "Jackson", "Martin", "Faribault"]:
+          return "Fifth Judicial District"
+      elif the_county in ["St. Louis", "Lake", "Cook", "Carlton"]:
+          return "Sixth Judicial District"
+      elif the_county in ["Clay", "Becker", "Otter Tail", "Wadena", "Douglas", "Todd", "Morrison", "Mille Lacs", "Stearns", "Benton"]:
+          return "Seventh Judicial District"
+      elif the_county in ["Wilkin", "Grant", "Traverse", "Big Stone", "Stevens", "Pope", "Swift", "Lac qui Parle", "Kandiyohi", "Chippewa", "Meeker", "Yellow Medicine", "Renville"]:
+          return "Eighth Judicial District"
+      elif the_county in ["Kittson", "Roseau", "Lake of the Woods", "Marshall", "Beltrami", "Koochiching", "Pennington", "Red Lake", "Polk", "Clearwater", "Norman", "Mahnomen", "Hubbard", "Cass", "Itasca", "Crow Wing", "Aitkin"]:
+          return "Ninth Judicial District"
+      elif the_county in ["Pine", "Kanabec", "Sherburne", "Isanti", "Chisago", "Anoka", "Wright", "Washington"]:
+          return "Tenth Judicial District"
+      else:
+          return "Unknown Judicial District"
+
+  trial_court_district = get_judicial_district(the_county)
+---
 id: district and county
 question: |
-  What court do you want to file in?
+  What county do you want to file in?
 fields:
-  - Judicial District: trial_court_district
-    choices: 
-      - 1st
-      - 2nd
-      - 3rd
-      - 4th
-      - 5th
-      - 6th
-      - 7th
-      - 8th
-      - 9th 
-      - 10th
-    help: |
-       There are 10 judicial districts in Minnesota.
-       **1st**: McLeod, Sibley, Carver, Scott, Dakota, Le Sueur, Goodhue
-       **2nd**: Ramsey    
-       **3rd**: Rice, Waseca, Steele, Dodge, Olmsted, Wabasha, Winona, Freeborn, Mower, Fillmore, Houston
-       **4th**: Hennepin
-       **5th**: Lincoln, Lyon, Redwood, Brown, Nicollet, Pipestone, Murray, Cottonwood, Watonwan, Blue Earth, Rock, Nobles, Jackson, Martin, Faribault
-       **6th**: St. Louis, Lake, Cook, Carlton
-       **7th**: Clay, Becker, Otter Tail, Wadena, Douglas, Todd, Morrison, Mille Lacs, Stearns, Benton
-       **8th**: Wilkin, Grant, Traverse, Big Stone, Stevens, Pope, Swift, Lac qui Parle, Kandiyohi, Chippewa, Meeker, Yellow Medicine, Renville
-       **9th**: Kittson, Roseau, Lake of the Woods, Marshall, Beltrami, Koochiching, Pennington, Red Lake, Polk, Clearwater, Norman, Mahnomen, Hubbard, Cass, Itasca, Crow Wing, Aitkin
-       **10th**: Pine, Kanabec, Sherburne, Isanti, Chisago, Anoka, Wright, Washington
-    required: False
+#  - Judicial District: trial_court_district
+#    choices: 
+#      - 1st
+#      - 2nd
+#      - 3rd
+#      - 4th
+#      - 5th
+#      - 6th
+#      - 7th
+#      - 8th
+#      - 9th 
+#      - 10th
+#    help: |
+#       There are 10 judicial districts in Minnesota.
+#       **1st**: McLeod, Sibley, Carver, Scott, Dakota, Le Sueur, Goodhue
+#       **2nd**: Ramsey    
+#       **3rd**: Rice, Waseca, Steele, Dodge, Olmsted, Wabasha, Winona, Freeborn, Mower, Fillmore, Houston
+#       **4th**: Hennepin
+#       **5th**: Lincoln, Lyon, Redwood, Brown, Nicollet, Pipestone, Murray, Cottonwood, Watonwan, Blue Earth, Rock, Nobles, Jackson, Martin, Faribault
+#       **6th**: St. Louis, Lake, Cook, Carlton
+#       **7th**: Clay, Becker, Otter Tail, Wadena, Douglas, Todd, Morrison, Mille Lacs, Stearns, Benton
+#       **8th**: Wilkin, Grant, Traverse, Big Stone, Stevens, Pope, Swift, Lac qui Parle, Kandiyohi, Chippewa, Meeker, Yellow Medicine, Renville
+#       **9th**: Kittson, Roseau, Lake of the Woods, Marshall, Beltrami, Koochiching, Pennington, Red Lake, Polk, Clearwater, Norman, Mahnomen, Hubbard, Cass, Itasca, Crow Wing, Aitkin
+#       **10th**: Pine, Kanabec, Sherburne, Isanti, Chisago, Anoka, Wright, Washington
+#    required: False
   - Trial court state: trial_court_state
     code: |
       states_list()
     default: Minnesota
     required: False
+    input type: hidden
   - Court County: the_county
     code: sorted(the_courts.county_list())
     required: False
@@ -394,26 +425,66 @@ fields:
     code: sorted(the_courts.county_list())
 section: user_address
 ---
+id: user phone number
+question: |
+  What is ${ users[0].name.first }'s phone number?
+fields:  
+  - Phone number: users[0].phone_number
+    required: False
+
+validation code: |
+  import re
+  
+  digits = re.sub(r'\D', '', users[0].phone_number)
+
+  if len(digits) != 10:
+    validation_error("Please enter a phone number in the format (xxx) xxx-xxxx", field="phone_number")
+
+  users[0].phone_number = f"({digits[0:3]}) {digits[3:6]}-{digits[6:10]}"
+
+#generic object: ALIndividual
+#question: |
+#  What is ${x}'s phone number?
+#fields:
+#  - Phone: x.phone_number
+#    required: False
+---
+id: user's email address
+question: |
+    What is your email address?
+fields:
+  - Email address: users[0].email
+    required: False
+---
 code: |
   other_parties[i].name_fields(person_or_business='unsure')
   other_parties[i].address.address
   other_parties[i].phone_number
   other_parties[i].complete = True
 ---
-id: persons contact information
-generic object: ALIndividual
+id: other parties phone number
 question: |
-  What is ${x}'s phone number?
-fields:
-  - Phone: x.phone_number
+  What is ${ other_parties[0].name.first }'s phone number?
+fields:  
+  - Phone number: other_parties[0].phone_number
     required: False
+
+validation code: |
+  import re
+  
+  digits = re.sub(r'\D', '', other_parties[0].phone_number)
+
+  if len(digits) != 10:
+    validation_error("Please enter a phone number in the format (xxx) xxx-xxxx", field="phone_number")
+
+  other_parties[0].phone_number = f"({digits[0:3]}) {digits[3:6]}-{digits[6:10]}"
 ---
 id: Repairs issues
 question: |
   List of all problems or violations you have with your rental housing:
 fields:
   - "Repairs issues": repairs_issues
-    maxlength: 250
+    maxlength: 600
     input type: area
   - "Estimated cost of repairs": cost_of_repairs
     datatype: currency
@@ -466,19 +537,27 @@ fields:
   - "Monthly rent amount": rent_amount
     datatype: currency
     min: 0
-  - "My rent is due on this date each month": day_rent_due
+  - "My rent is due on the following day each month": day_rent_due  
+    datatype: text
+    hint: e.g. 1st, 5th, 30th, last, etc.
+  - "choose one of the following": rent_status
+    datatype: checkboxes
+    maxlength: 1
+    choices: 
+      - "My rent is paid in full and no rent is due until the below date": rent_paid
+      - "I owe the following amount of rent and I am depositing this amount with the court.": rent_due
+    none of the above: False
+  - "Next rent due on": next_rent_due_date
     datatype: date
-  # How do I add a line above these two options, like a question or header? - As of this date: (check one): 
-  - "My rent is paid in full and no rent is due until": rent_paid
-    datatype: yesno
-  - "I owe the following amount of rent and I am depositing this amount with the court.": rent_due
-    datatype: yesno
-  - "no label": next_rent_due_date
-    show if: rent_paid
-    datatype: date
-  - "no label": rent_owed
-    show if: rent_due
+    show if: 
+      variable: rent_status
+      is: rent_paid
+  - "Rent amount owed": rent_owed
     datatype: currency
+    show if: 
+      variable: rent_status
+      is: rent_due
+# these show ifs are no longer working. are they not compatible w/checkboxes? 
 section: rent_info
 ---
 id: relief
@@ -510,7 +589,6 @@ section: relief_sought
 id: preview affidavit_of_rent_escrow
 question: |
   Preview your form before you sign it
-  ${ users[0].phone_number } phone number:
 subquestion: |
   Here is a preview of the form you will sign on the next page.   
   
@@ -713,7 +791,8 @@ attachment:
       - "the_county": ${ the_county } 
       - "docket_number": ${ docket_number } 
       - "multi_user_comma": ${ comma_and_list(users[0], users[1], users[2]) } 
-      - "users1_address_address_1": ${ users[0].address.address }
+      - "users1_name_1": ${ users[0] }
+      - "users1_address_address_1": ${ users[0].address.address } #including full address instead of just street address
       - "users1_address_unit_1": ${ users[0].address.unit } 
       - "users1_address_line_two_1": ${ users[0].address.line_two() } 
       - "users1_address_county_1": ${ users[0].address.county } 
@@ -724,22 +803,22 @@ attachment:
       - "users1_address_unit_2": ${ users[1].address.unit } #need to use an addendum for these additional
       - "users1_address_line_two_2": ${ users[1].address.line_two() } #need to use an addendum for these additional
       - "users1_address_county_2": ${ users[1].address.county } #need to use an addendum for these additional
-      - "users1_phone_number_2": ${ users[1].phone_number } #need to use an addendum for these additional
+      - "users1_phone_number_2": ${ users[1].phone_numbers() } #need to use an addendum for these additional
       - "users1_email_2": ${ users[1].email } #need to use an addendum for these additional
       #- "users1_name_3": ${ users[2].name.full() } #all names are included
       - "users1_address_address_3": ${ users[2].address.address } #need to use an addendum for these additional
       - "users1_address_unit_3": ${ users[2].address.unit } #need to use an addendum for these additional
       - "users1_address_line_two_3": ${ users[2].address.line_two() } #need to use an addendum for these additional
       - "users1_address_county_3": ${ users[2].address.county } #need to use an addendum for these additional
-      - "users1_phone_number_3": ${ users[2].phone_number } #need to use an addendum for these additional
+      - "users1_phone_number_3": ${ users[2].phone_numbers() } #need to use an addendum for these additional
       - "users1_email_3": ${ users[2].email } #need to use an addendum for these additional
       - "multi_other_parties_comma": ${ comma_and_list(other_parties[0], other_parties[1]) }
       - "other_parties1_name_1": ${ other_parties[0] }
-      - "other_parties_1_address_on_one_line_1": ${ other_parties[0].address.line_one() }
-      - "other_parties1_phone_number_1": ${ other_parties[0].phone_number }
+      - "other_parties_1_address_on_one_line_1": ${ other_parties[0].address.on_one_line() }
+      - "other_parties1_phone_number_1": ${ other_parties[0].phone_numbers() }
       - "other_parties1_name_2": ${ other_parties[1] }
-      - "other_parties_1_address_on_one_line_2": ${ other_parties[1].address.line_one() }
-      - "other_parties1_phone_number_2": ${ other_parties[1].phone_number }
+      - "other_parties_1_address_on_one_line_2": ${ other_parties[1].address.on_one_line() }
+      - "other_parties1_phone_number_2": ${ other_parties[1].phone_numbers() }
       - "repairs_issues": ${ repairs_issues } #working but the wrapping isn't lining up well w/the lines on the PDF
       - "cost_of_repairs": ${ cost_of_repairs }
       - "inspector_order_yes": ${ inspector_order_yes }
@@ -754,9 +833,9 @@ attachment:
       - "manager": ${ repairs_requested_delivered_to["manager"] } 
       - "rent_amount": ${ currency(rent_amount) }
       - "day_rent_due": ${ day_of(day_rent_due) } 
-      - "rent_paid": ${ rent_paid }
+      - "rent_paid": ${ rent_status["rent_paid"] } #not working
       - "next_rent_due_date": ${ next_rent_due_date.format() } 
-      - "rent_due": ${ rent_due }
+      - "rent_due": ${ rent_status["rent_due"] } #not working
       - "rent_owed": ${ rent_owed } 
       - "relief_order_repairs": ${ relief_order_repairs }
       - "relief_self_complete_repairs": ${ relief_self_complete_repairs }
